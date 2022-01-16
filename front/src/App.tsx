@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 
 import { LandingPage } from "./landing/LandingPage";
+import { LobbyPage } from "./lobby/LobbyPage";
 
 const theme = extendTheme({
   styles: {

@@ -25,6 +25,8 @@
     "@nestjs/core": "^8.0.0",
     "@nestjs/mongoose": "^9.0.2",
     "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/platform-socket.io": "^8.2.5",
+    "@nestjs/websockets": "^8.2.5",
     "mongoose": "^6.1.6",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
