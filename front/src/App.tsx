@@ -3,6 +3,7 @@ import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 
 import { LandingPage } from "./landing/LandingPage";
 import { LobbyPage } from "./lobby/LobbyPage";
+import { WebSocketProvider } from "./context/WebSocketProvider";
 
 const theme = extendTheme({
   styles: {
@@ -18,13 +19,15 @@ const theme = extendTheme({
 export const App = () => {
   return (
     <ChakraProvider theme={theme}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />}></Route>
-          <Route path="/lobby/:gameId" element={<LobbyPage />}></Route>
-          <Route path="*" element={<LandingPage />} />
-        </Routes>
-      </BrowserRouter>
+      <WebSocketProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />}></Route>
+            <Route path="/lobby/:gameId" element={<LobbyPage />}></Route>
+            <Route path="*" element={<LandingPage />} />
+          </Routes>
+        </BrowserRouter>
+      </WebSocketProvider>
     </ChakraProvider>
   );
 };

@@ -12,8 +12,20 @@ export class Game {
   @Prop({ required: true })
   creatorId: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Player" })
+  @Prop()
   players: Player[];
+
+  @Prop()
+  started: boolean;
 }
 
 export const GameSchema = SchemaFactory.createForClass(Game);
+
+GameSchema.set("toJSON", {
+  virtuals: true,
+  transform(doc, ret) {
+    ret.id = doc._id.toString();
+    delete ret._id;
+    delete ret.__v;
+  },
+});

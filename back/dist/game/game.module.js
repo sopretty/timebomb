@@ -9,22 +9,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
+const game_gateway_1 = require("./gateway/game.gateway");
 const game_controller_1 = require("./controllers/game.controller");
 const game_schemas_1 = require("./schemas/game.schemas");
-const player_schemas_1 = require("./schemas/player.schemas");
 const game_service_1 = require("./services/game.service");
+const game_repository_1 = require("./repository/game.repository");
 let GameModule = class GameModule {
 };
 GameModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: game_schemas_1.GAME_NAME_SCHEMA, schema: game_schemas_1.GameSchema },
-                { name: player_schemas_1.PLAYER_NAME_SCHEMA, schema: player_schemas_1.PlayerSchema },
-            ]),
+            mongoose_1.MongooseModule.forFeature([{ name: game_schemas_1.GAME_NAME_SCHEMA, schema: game_schemas_1.GameSchema }]),
         ],
         controllers: [game_controller_1.GameController],
-        providers: [game_service_1.GameService],
+        providers: [game_service_1.GameService, game_repository_1.GameRepository, game_gateway_1.GameGateway],
     })
 ], GameModule);
 exports.GameModule = GameModule;

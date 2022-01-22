@@ -17,7 +17,7 @@ let Player = class Player {
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
-], Player.prototype, "uuid", void 0);
+], Player.prototype, "id", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
@@ -27,4 +27,13 @@ Player = __decorate([
 ], Player);
 exports.Player = Player;
 exports.PlayerSchema = mongoose_1.SchemaFactory.createForClass(Player);
+exports.PlayerSchema.set("toJSON", {
+    virtuals: true,
+    transform(doc, ret) {
+        ret.id = doc._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+    },
+});
 //# sourceMappingURL=player.schemas.js.map

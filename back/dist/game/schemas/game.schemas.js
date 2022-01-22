@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameSchema = exports.Game = exports.GAME_NAME_SCHEMA = void 0;
-const mongoose = require("mongoose");
 const mongoose_1 = require("@nestjs/mongoose");
 exports.GAME_NAME_SCHEMA = "Game";
 let Game = class Game {
@@ -20,12 +19,24 @@ __decorate([
     __metadata("design:type", String)
 ], Game.prototype, "creatorId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose.Schema.Types.ObjectId, ref: "Player" }),
+    (0, mongoose_1.Prop)(),
     __metadata("design:type", Array)
 ], Game.prototype, "players", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Boolean)
+], Game.prototype, "started", void 0);
 Game = __decorate([
     (0, mongoose_1.Schema)()
 ], Game);
 exports.Game = Game;
 exports.GameSchema = mongoose_1.SchemaFactory.createForClass(Game);
+exports.GameSchema.set("toJSON", {
+    virtuals: true,
+    transform(doc, ret) {
+        ret.id = doc._id.toString();
+        delete ret._id;
+        delete ret.__v;
+    },
+});
 //# sourceMappingURL=game.schemas.js.map

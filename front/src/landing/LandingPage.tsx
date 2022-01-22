@@ -9,13 +9,13 @@ export const LandingPage: FunctionComponent = () => {
   const navigate = useNavigate();
 
   const createGame = useCallback(() => {
-    const creatorId = uuid();
-    localStorage.setItem("creatorId", creatorId);
+    const userId = uuid();
+    localStorage.setItem("userId", userId);
 
     httpFetch<{ id: string; creatorId: string }>({
       method: "PUT",
       url: "http://localhost:2000/games",
-      body: { creatorId },
+      body: { creatorId: userId },
     }).then((result) => {
       navigate(`/lobby/${result.id}`);
     });
