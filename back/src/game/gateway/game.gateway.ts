@@ -9,8 +9,9 @@ import {
 import { Logger } from "@nestjs/common";
 import { Socket, Server } from "socket.io";
 import { GameService } from "../services/game.service";
-import { mergeMap, Observable, tap } from "rxjs";
+import { iif, map, mergeMap, Observable, of, tap } from "rxjs";
 import { Game } from "../schemas/game.schemas";
+import { Player } from "../schemas/player.schemas";
 
 @WebSocketGateway({ cors: "*:*" })
 export class GameGateway
@@ -28,22 +29,48 @@ export class GameGateway
     client: Socket,
     payload: {
       gameId: string;
-      player: { id: string; nickname: string };
+      player: Pick<Player, "id" | "nickname">;
     }
-  ): Observable<Game> {
-    // TODO: check that there is no more than 7 players before adding
-    client.data = {
-      playerId: payload.player.id,
-      gameId: payload.gameId,
-    };
+  ): Observable<any> {
+    console.log("join", payload.player.id);
+    client.join(payload.player.id);
 
-    client.join(payload.gameId);
+    return this.gameService.findOne(payload.gameId).pipe(
+      mergeMap((game) =>
+        iif(
+          () =>
+            game.players.length < 8 &&
+            // et que la partie n'est pas déjà commencé ?
+            !game.players.find((player) => player.id === payload.player.id),
+          this.gameService.joinGame(payload.gameId, payload.player).pipe(
+            tap((game) => {
+              client.data = {
+                playerId: payload.player.id,
+                gameId: payload.gameId,
+              };
 
-    return this.gameService.joinGame(payload.gameId, payload.player).pipe(
-      tap((game) => {
-        this.server.sockets.to(payload.gameId).emit("game_updated", game);
-      })
+              game.players.forEach((player) => {
+                console.log("when somebody else join", player.id);
+                // TODO create a function to filter cards from other players
+                this.server.sockets
+                  .to(player.id)
+                  .emit(
+                    "game_updated",
+                    this.gameService.formatGame(game, player.id)
+                  );
+              });
+            })
+          ),
+          of(null).pipe(
+            tap(() => {
+              this.server.sockets.to(payload.player.id).emit("unjoinable_game");
+            })
+          )
+        )
+      )
     );
+
+    return;
   }
 
   @SubscribeMessage("start")
@@ -52,11 +79,19 @@ export class GameGateway
     payload: {
       gameId: string;
     }
-  ): Observable<any> {
-    return this.gameService.startGame(payload.gameId).pipe(
-      mergeMap(() => this.gameService.findOne(payload.gameId)),
-      tap((game) => {
-        this.server.sockets.to(payload.gameId).emit("game_started", game);
+  ): Observable<Game> {
+    return this.gameService.setup(payload.gameId).pipe(
+      mergeMap((game) => {
+        console.log(game);
+        return this.gameService.startTurn(game)}),
+      tap((game: Game) => {
+
+        game.players.forEach((player) => {
+          // TODO create a function to filter cards from other players
+          this.server.sockets
+            .to(player.id)
+            .emit("game_started", this.gameService.formatGame(game, player.id));
+        });
       })
     );
   }
@@ -65,15 +100,24 @@ export class GameGateway
     this.logger.log("Init");
   }
 
+  // TODO: if game has started, we shouldn't do anything
   handleDisconnect(client: Socket) {
+    console.log("disconnected");
     if (client.data.gameId && client.data.playerId) {
       this.gameService
         .leaveGame(client.data.gameId, client.data.playerId)
         .pipe(
           tap((game) => {
-            this.server.sockets
-              .to(client.data.gameId)
-              .emit("game_updated", game);
+            game.players.forEach((player) => {
+              console.log("handle disconnction");
+              // TODO create a function to filter cards from other players
+              this.server.sockets
+                .to(player.id)
+                .emit(
+                  "game_updated",
+                  this.gameService.formatGame(game, player.id)
+                );
+            });
           })
         )
         .subscribe();

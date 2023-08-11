@@ -9,10 +9,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PlayerSchema = exports.Player = exports.PLAYER_NAME_SCHEMA = void 0;
+exports.PlayerSchema = exports.Player = exports.Role = exports.Turn = exports.Card = exports.PLAYER_NAME_SCHEMA = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 exports.PLAYER_NAME_SCHEMA = "Player";
-let Player = class Player {
+class Card {
+}
+exports.Card = Card;
+class Turn {
+}
+exports.Turn = Turn;
+class Role {
+}
+exports.Role = Role;
+let Player = exports.Player = class Player {
 };
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
@@ -22,10 +31,25 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
 ], Player.prototype, "nickname", void 0);
-Player = __decorate([
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Array)
+], Player.prototype, "turns", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Boolean)
+], Player.prototype, "leader", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Number)
+], Player.prototype, "index", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Role)
+], Player.prototype, "role", void 0);
+exports.Player = Player = __decorate([
     (0, mongoose_1.Schema)()
 ], Player);
-exports.Player = Player;
 exports.PlayerSchema = mongoose_1.SchemaFactory.createForClass(Player);
 exports.PlayerSchema.set("toJSON", {
     virtuals: true,

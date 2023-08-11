@@ -1,4 +1,3 @@
-import * as mongoose from "mongoose";
 import { Document } from "mongoose";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Player } from "./player.schemas";
@@ -16,7 +15,13 @@ export class Game {
   players: Player[];
 
   @Prop()
-  started: boolean;
+  started?: boolean;
+
+  @Prop({default: 0})
+  currentTurnIndex: number;
+
+  @Prop()
+  id: string;
 }
 
 export const GameSchema = SchemaFactory.createForClass(Game);

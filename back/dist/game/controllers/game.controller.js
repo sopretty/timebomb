@@ -19,7 +19,7 @@ const game_service_1 = require("../services/game.service");
 class CreateGameBody {
 }
 exports.CreateGameBody = CreateGameBody;
-let GameController = class GameController {
+let GameController = exports.GameController = class GameController {
     constructor(gameService) {
         this.gameService = gameService;
     }
@@ -44,9 +44,8 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", rxjs_1.Observable)
 ], GameController.prototype, "findOneGame", null);
-GameController = __decorate([
+exports.GameController = GameController = __decorate([
     (0, common_1.Controller)("games"),
     __metadata("design:paramtypes", [game_service_1.GameService])
 ], GameController);
-exports.GameController = GameController;
 //# sourceMappingURL=game.controller.js.map

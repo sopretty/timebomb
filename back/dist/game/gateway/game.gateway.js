@@ -15,37 +15,58 @@ const common_1 = require("@nestjs/common");
 const socket_io_1 = require("socket.io");
 const game_service_1 = require("../services/game.service");
 const rxjs_1 = require("rxjs");
-let GameGateway = class GameGateway {
+let GameGateway = exports.GameGateway = class GameGateway {
     constructor(gameService) {
         this.gameService = gameService;
         this.logger = new common_1.Logger("GameGateway");
     }
     joinGameMessage(client, payload) {
-        client.data = {
-            playerId: payload.player.id,
-            gameId: payload.gameId,
-        };
-        client.join(payload.gameId);
-        return this.gameService.joinGame(payload.gameId, payload.player).pipe((0, rxjs_1.tap)((game) => {
-            this.server.sockets.to(payload.gameId).emit("game_updated", game);
-        }));
+        console.log("join", payload.player.id);
+        client.join(payload.player.id);
+        return this.gameService.findOne(payload.gameId).pipe((0, rxjs_1.mergeMap)((game) => (0, rxjs_1.iif)(() => game.players.length < 8 &&
+            !game.players.find((player) => player.id === payload.player.id), this.gameService.joinGame(payload.gameId, payload.player).pipe((0, rxjs_1.tap)((game) => {
+            client.data = {
+                playerId: payload.player.id,
+                gameId: payload.gameId,
+            };
+            game.players.forEach((player) => {
+                console.log("when somebody else join", player.id);
+                this.server.sockets
+                    .to(player.id)
+                    .emit("game_updated", this.gameService.formatGame(game, player.id));
+            });
+        })), (0, rxjs_1.of)(null).pipe((0, rxjs_1.tap)(() => {
+            this.server.sockets.to(payload.player.id).emit("unjoinable_game");
+        })))));
+        return;
     }
     startGameMessage(_client, payload) {
-        return this.gameService.startGame(payload.gameId).pipe((0, rxjs_1.mergeMap)(() => this.gameService.findOne(payload.gameId)), (0, rxjs_1.tap)((game) => {
-            this.server.sockets.to(payload.gameId).emit("game_started", game);
+        return this.gameService.setup(payload.gameId).pipe((0, rxjs_1.mergeMap)((game) => {
+            console.log(game);
+            return this.gameService.startTurn(game);
+        }), (0, rxjs_1.tap)((game) => {
+            game.players.forEach((player) => {
+                this.server.sockets
+                    .to(player.id)
+                    .emit("game_started", this.gameService.formatGame(game, player.id));
+            });
         }));
     }
     afterInit(_server) {
         this.logger.log("Init");
     }
     handleDisconnect(client) {
+        console.log("disconnected");
         if (client.data.gameId && client.data.playerId) {
             this.gameService
                 .leaveGame(client.data.gameId, client.data.playerId)
                 .pipe((0, rxjs_1.tap)((game) => {
-                this.server.sockets
-                    .to(client.data.gameId)
-                    .emit("game_updated", game);
+                game.players.forEach((player) => {
+                    console.log("handle disconnction");
+                    this.server.sockets
+                        .to(player.id)
+                        .emit("game_updated", this.gameService.formatGame(game, player.id));
+                });
             }))
                 .subscribe();
         }
@@ -71,9 +92,8 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
     __metadata("design:returntype", rxjs_1.Observable)
 ], GameGateway.prototype, "startGameMessage", null);
-GameGateway = __decorate([
+exports.GameGateway = GameGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({ cors: "*:*" }),
     __metadata("design:paramtypes", [game_service_1.GameService])
 ], GameGateway);
-exports.GameGateway = GameGateway;
 //# sourceMappingURL=game.gateway.js.map

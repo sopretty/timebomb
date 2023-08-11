@@ -14,9 +14,9 @@ const game_controller_1 = require("./controllers/game.controller");
 const game_schemas_1 = require("./schemas/game.schemas");
 const game_service_1 = require("./services/game.service");
 const game_repository_1 = require("./repository/game.repository");
-let GameModule = class GameModule {
+let GameModule = exports.GameModule = class GameModule {
 };
-GameModule = __decorate([
+exports.GameModule = GameModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: game_schemas_1.GAME_NAME_SCHEMA, schema: game_schemas_1.GameSchema }]),
@@ -25,5 +25,4 @@ GameModule = __decorate([
         providers: [game_service_1.GameService, game_repository_1.GameRepository, game_gateway_1.GameGateway],
     })
 ], GameModule);
-exports.GameModule = GameModule;
 //# sourceMappingURL=game.module.js.map

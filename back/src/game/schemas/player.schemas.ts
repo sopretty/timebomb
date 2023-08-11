@@ -5,6 +5,20 @@ export type PlayerDocument = Player & Document;
 
 export const PLAYER_NAME_SCHEMA = "Player";
 
+export class Card {
+  type: "defusingWire" | "bomb" | "secureWire";
+  revealed: boolean;
+}
+
+export class Turn {
+  cards: Card[];
+  ready: boolean;
+}
+
+export class Role {
+  team: "moriarty" | "sherlock";
+}
+
 @Schema()
 export class Player {
   @Prop({ required: true })
@@ -12,6 +26,18 @@ export class Player {
 
   @Prop({ required: true })
   nickname: string;
+
+  @Prop()
+  turns: Turn[];
+
+  @Prop()
+  leader?: boolean;
+
+  @Prop()
+  index: number;
+
+  @Prop()
+  role: Role;
 }
 
 export const PlayerSchema = SchemaFactory.createForClass(Player);

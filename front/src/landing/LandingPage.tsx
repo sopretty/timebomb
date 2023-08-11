@@ -1,15 +1,13 @@
 import { FunctionComponent, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuid } from "uuid";
 import { Flex, Button } from "@chakra-ui/react";
 
 import { httpFetch } from "../utils/fetch";
 
-export const LandingPage: FunctionComponent = () => {
+export const LandingPage: FunctionComponent<{userId: string}> = ({userId}) => {
   const navigate = useNavigate();
 
   const createGame = useCallback(() => {
-    const userId = uuid();
     localStorage.setItem("userId", userId);
 
     httpFetch<{ id: string; creatorId: string }>({
@@ -19,7 +17,7 @@ export const LandingPage: FunctionComponent = () => {
     }).then((result) => {
       navigate(`/lobby/${result.id}`);
     });
-  }, [navigate]);
+  }, [userId, navigate]);
 
   return (
     <Flex h="100%" justify="center">

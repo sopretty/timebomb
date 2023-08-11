@@ -10,14 +10,13 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const game_module_1 = require("./game/game.module");
-let AppModule = class AppModule {
+let AppModule = exports.AppModule = class AppModule {
 };
-AppModule = __decorate([
+exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [mongoose_1.MongooseModule.forRoot('mongodb://0.0.0.0:27888'), game_module_1.GameModule],
         controllers: [],
         providers: [],
     })
 ], AppModule);
-exports.AppModule = AppModule;
 //# sourceMappingURL=app.module.js.map

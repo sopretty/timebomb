@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GameSchema = exports.Game = exports.GAME_NAME_SCHEMA = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 exports.GAME_NAME_SCHEMA = "Game";
-let Game = class Game {
+let Game = exports.Game = class Game {
 };
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
@@ -26,10 +26,17 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", Boolean)
 ], Game.prototype, "started", void 0);
-Game = __decorate([
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], Game.prototype, "currentTurnIndex", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Game.prototype, "id", void 0);
+exports.Game = Game = __decorate([
     (0, mongoose_1.Schema)()
 ], Game);
-exports.Game = Game;
 exports.GameSchema = mongoose_1.SchemaFactory.createForClass(Game);
 exports.GameSchema.set("toJSON", {
     virtuals: true,

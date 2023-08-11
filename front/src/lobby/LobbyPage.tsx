@@ -4,7 +4,7 @@ import {
   useCallback,
   useState,
   useMemo,
-  useContext,
+  ChangeEvent,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -17,31 +17,24 @@ import {
   Box,
   Tooltip,
 } from "@chakra-ui/react";
-import { v4 as uuid } from "uuid";
 
-import { httpFetch } from "../utils/fetch";
-import { WebSocketContext } from "../context/WebSocketProvider";
 
-interface Game {
-  id: string;
-  creatorId: string;
-  players: { id: string; nickname: string }[];
-}
+import { useWebSocket } from "../context/WebSocketProvider";
+import { useGame } from "../context/GameProvider";
 
 export const LobbyPage: FunctionComponent = () => {
-  const [isLoading, setLoading] = useState<boolean>(true);
-  const [game, setGame] = useState<Game | null>(null);
+  const { game, isLoading, userId } = useGame();
 
   const [nickname, setNickname] = useState<string>(
     localStorage.getItem("nickname") || ""
   );
   const [isReady, setReady] = useState<boolean>(false);
+  const [isPageLoading, setPageLoading] = useState<boolean>(true);
 
-  const { webSocket, sendEvent } = useContext(WebSocketContext);
+  const { webSocket, joinGame } = useWebSocket();
   const { gameId } = useParams();
   const navigate = useNavigate();
 
-  const userId = useMemo(() => localStorage.getItem("userId") || uuid(), []);
 
   const gameUrl = useMemo(
     () => `http://localhost:3000/lobby/${gameId}`,
@@ -49,47 +42,33 @@ export const LobbyPage: FunctionComponent = () => {
   );
   const { hasCopied, onCopy } = useClipboard(gameUrl);
 
-  useEffect(() => {
-    if (!gameId) {
-      navigate("/");
+  const joinLobby = useCallback(() => {
+    setReady(true);
+    if(joinGame && gameId){
+      joinGame(gameId, userId, nickname);
+    } else {
+     // TODO wait for the websocket connection before ?
     }
 
-    httpFetch<{
-      id: string;
-      creatorId: string;
-      players: { id: string; nickname: string }[];
-    }>({
-      method: "GET",
-      url: `http://localhost:2000/games/${gameId}`,
-    })
-      .then((createdGame) => {
-        setLoading(false);
-        setGame(createdGame);
-      })
-      .catch(() => {
-        navigate("/");
-      });
-  }, [gameId, navigate]);
 
-  const joinLobby = useCallback(() => {
-    localStorage.setItem("nickname", nickname);
-    localStorage.setItem("userId", userId);
-    sendEvent("join", { gameId, player: { id: userId, nickname } });
-    setReady(true);
-  }, [nickname, userId, gameId, sendEvent]);
+  }, [gameId, userId, nickname, joinGame, setReady]);
 
-  const onNicknameChange = useCallback((event) => {
+  const onNicknameChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setNickname(event.target.value);
-  }, []);
+    localStorage.setItem('nickname', event.target.value);
+  }, [setNickname]);
 
   useEffect(() => {
     if (webSocket) {
-      webSocket?.on("game_updated", (game) => {
-        console.log(game);
-        setGame(game);
+      webSocket?.on("game_started", (game) => {
+        navigate(`/games/${game.id}`, { state: { from: "lobby" } });
       });
     }
-  }, [webSocket]);
+  }, [webSocket, navigate]);
+
+  useEffect(() => {
+    setPageLoading(!isLoading ? isLoading : true);
+  }, [isLoading]);
 
   const startGame = useCallback(() => {
     if (webSocket) {
@@ -99,19 +78,20 @@ export const LobbyPage: FunctionComponent = () => {
 
   return (
     <>
-      {isLoading && <Spinner size="xl" />}
-      {!isReady && (
+      {isPageLoading && <Spinner size="xl" />}
+      {!isReady && game && game.players.length < 8 && (
         <>
           <Input
             value={nickname}
             onChange={onNicknameChange}
             placeholder="Select a Nickname"
           />
-          <Button disabled={!nickname} onClick={joinLobby}>
+          <Button isDisabled={!nickname} onClick={joinLobby}>
             Join the game
           </Button>
         </>
       )}
+      {!isReady && game && game.players.length >= 7 && <>Game full</>}
       {isReady && (
         <>
           <Flex mb={2}>
@@ -130,8 +110,8 @@ export const LobbyPage: FunctionComponent = () => {
                 size="md"
                 colorScheme={game.players.length >= 4 ? "green" : "red"}
               />
-              Players:
-              {game.players.map((player) => (
+              {game.players.length} Players:
+              {game.players.sort().map((player) => (
                 <Box key={player.id}>{player.nickname}</Box>
               ))}
               <Tooltip
@@ -146,7 +126,7 @@ export const LobbyPage: FunctionComponent = () => {
               >
                 <Button
                   onClick={startGame}
-                  disabled={
+                  isDisabled={
                     userId !== game.creatorId || game.players.length < 4
                   }
                 >

@@ -7,7 +7,7 @@ import {
   UpdateQuery,
   UpdateWithAggregationPipeline,
 } from "mongoose";
-import { from, map, mapTo, mergeMap, Observable, tap } from "rxjs";
+import { from, map, Observable, tap } from "rxjs";
 import { Game, GameDocument, GAME_NAME_SCHEMA } from "../schemas/game.schemas";
 import { Player } from "../schemas/player.schemas";
 
@@ -30,7 +30,7 @@ export class GameRepository {
     options?: QueryOptions | null
   ): Observable<Game> {
     return from(this.gameModel.findById(id, projection, options)).pipe(
-      map((gameDocument) => gameDocument.toJSON())
+      map((gameDocument) => !!gameDocument && gameDocument.toJSON())
     );
   }
 
@@ -40,9 +40,7 @@ export class GameRepository {
     update?: UpdateQuery<Game> | UpdateWithAggregationPipeline,
     options?: QueryOptions | null
   ): Observable<any> {
-    return from(this.gameModel.updateOne(filter, update, options)).pipe(
-      tap((gameDocument) => console.log("updateOne", { gameDocument }))
-    );
+    return from(this.gameModel.updateOne(filter, update, options)).pipe();
   }
 
   findOneAndUpdate(
