@@ -11,12 +11,13 @@ import {
   } from "@chakra-ui/react";
 import { useGame } from "../../context/GameProvider";
 
-export const StartingGameModal: FunctionComponent = () => {
+
+export const StartingGameModal: FunctionComponent= () => {
   const { player } = useGame();
 
   const [isOpen, setOpen] = useState<boolean>(true);
 
-  console.log(player);
+  console.log({player});
 
   const onClose = useCallback(() => {
     setOpen(false);

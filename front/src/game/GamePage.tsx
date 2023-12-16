@@ -73,8 +73,8 @@ export const GamePage: FunctionComponent = () => {
               <Box display="flex" flexDirection="row" justifyContent="space-between"
               h="100%"
               alignItems="center">
-            {!!player && player.turns && player.turns.length > game.currentTurnIndex ? player?.turns[game.currentTurnIndex].cards.map((card) => (
-                <Card {...card}></Card>
+            {!!player && player.turns && player.turns.length > game.currentTurnIndex ? player?.turns[game.currentTurnIndex].cards.map((card, index) => (
+                <Card key={index} {...card}></Card>
                 ) ) : null}
                 </Box>
             </Box>

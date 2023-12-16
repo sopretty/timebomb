@@ -152,34 +152,39 @@ export class GameService {
       cardPull.push(
         ...Array.from(Array(bombCardNumber).keys()).map(() => ({
           type: "bomb",
+          revealed: false,
           id: uuid(),
         }))
       );
       cardPull.push(
         ...Array.from(Array(secureWireCardsNumber).keys()).map(() => ({
           type: "secureWire",
+          revealed: false,
           id: uuid(),
         }))
       );
       cardPull.push(
         ...Array.from(Array(defusingWireCardsNumber).keys()).map(() => ({
           type: "defusingWire",
+          revealed: false,
           id: uuid(),
         }))
       );
 
       const shuffledCards = shuffle(cardPull);
 
-      const players = game.players.map((player) => ({
-        ...player,
-        turns: player.turns.push({ cards: [], ready: false }),
-      }));
+      game.players.forEach((player) => {
+        player.turns.push({ cards: [], ready: false });
+      });
+
+
 
       while (cardsNumberToDeal > 0) {
         const [cardPulled] = shuffledCards.splice(
           Math.floor(Math.random() * shuffledCards.length),
           1
         );
+        console.log(cardPull);
 
         game.players[
           (randomPlayerIndex + cardsNumberToDealTotal - cardsNumberToDeal) %
@@ -252,7 +257,9 @@ export class GameService {
       players: game.players.map((playerFilter) => ({
         ...playerFilter,
         ...(playerFilter.id !== playerId
-          ? { turns: undefined, role: undefined }
+          ? { turns: playerFilter.turns.map((turn) => ({...turn,
+          cards: turn.cards.map((card) => ({...card, type: undefined}))
+          })), role: undefined }
           : {}),
       })),
     };

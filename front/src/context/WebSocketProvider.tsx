@@ -12,6 +12,7 @@ interface WebSocketContextType {
   webSocket: Socket | null;
   isConnected: boolean;
   sendEvent: ((type: string, body: unknown) => void) | null;
+  openWs: () => void;
   joinGame: ((gameId: string, playerId: string, playerNickname: string) => void) | null;
 }
 
@@ -20,6 +21,7 @@ export const WebSocketContext = createContext<WebSocketContextType>({
   isConnected: false,
   sendEvent: null,
   joinGame: null,
+  openWs: () => {}
 });
 
 interface WebSocketProviderProps {
@@ -31,20 +33,16 @@ const wsUrl = "ws://localhost:2000";
 export const WebSocketProvider: FunctionComponent<WebSocketProviderProps> = ({
   children,
 }) => {
-  const [webSocket, setWs] = useState<Socket | null>(null);
+  const [webSocket, setWebSocket] = useState<Socket | null>(null);
   const [isConnected, setConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!webSocket) {
-      setWs(io(wsUrl));
-    }
     if (webSocket) {
       webSocket.on("connect", () => {
         setConnected(true);
       });
     }
   }, [webSocket]);
-
   const sendEvent = useCallback(
     (type: string, body: unknown) => {
       if (isConnected) {
@@ -52,6 +50,19 @@ export const WebSocketProvider: FunctionComponent<WebSocketProviderProps> = ({
       }
     },
     [isConnected, webSocket]
+  );
+
+  if(webSocket){
+    console.log(webSocket.disconnected)
+  }
+
+  const openWs = useCallback(
+    () => {
+      if (!webSocket) {
+        setWebSocket(io(wsUrl));
+      }
+    },
+    [webSocket]
   );
 
   const joinGame = useCallback(
@@ -72,6 +83,7 @@ export const WebSocketProvider: FunctionComponent<WebSocketProviderProps> = ({
       value={{
         webSocket,
         isConnected,
+        openWs,
         sendEvent: isConnected ? sendEvent : null,
         joinGame: isConnected ? joinGame : null,
       }}

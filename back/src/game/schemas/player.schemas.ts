@@ -8,6 +8,7 @@ export const PLAYER_NAME_SCHEMA = "Player";
 export class Card {
   type: "defusingWire" | "bomb" | "secureWire";
   revealed: boolean;
+  id: string;
 }
 
 export class Turn {

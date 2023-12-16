@@ -32,45 +32,61 @@ export class GameGateway
       player: Pick<Player, "id" | "nickname">;
     }
   ): Observable<any> {
-    console.log("join", payload.player.id);
     client.join(payload.player.id);
-
+console.log('join', payload)
     return this.gameService.findOne(payload.gameId).pipe(
-      mergeMap((game) =>
-        iif(
-          () =>
-            game.players.length < 8 &&
-            // et que la partie n'est pas déjà commencé ?
-            !game.players.find((player) => player.id === payload.player.id),
-          this.gameService.joinGame(payload.gameId, payload.player).pipe(
-            tap((game) => {
-              client.data = {
-                playerId: payload.player.id,
-                gameId: payload.gameId,
-              };
+      mergeMap((game) => {
 
-              game.players.forEach((player) => {
-                console.log("when somebody else join", player.id);
-                // TODO create a function to filter cards from other players
-                this.server.sockets
-                  .to(player.id)
-                  .emit(
-                    "game_updated",
-                    this.gameService.formatGame(game, player.id)
-                  );
-              });
-            })
-          ),
-          of(null).pipe(
-            tap(() => {
-              this.server.sockets.to(payload.player.id).emit("unjoinable_game");
-            })
-          )
-        )
-      )
+        // if the game hasn't started yet and that the game is still joinable
+        if(game.players.length < 8 &&
+          !game.started &&
+          !game.players.find((player) => player.id === payload.player.id)) {
+            return this.gameService.joinGame(payload.gameId, payload.player).pipe(
+              tap((game) => {
+                client.data = {
+                  playerId: payload.player.id,
+                  gameId: payload.gameId,
+                };
+
+                game.players.forEach((player) => {
+                  console.log("when somebody else join", player.id);
+                  // TODO create a function to filter cards from other players
+                  this.server.sockets
+                    .to(player.id)
+                    .emit(
+                      "game_updated",
+                      this.gameService.formatGame(game, player.id)
+                    );
+                });
+              })
+            )
+          }
+
+          // if the game hasn't started but it's full
+          if(game.players.length > 7 &&
+            !game.started){
+              this.server.sockets.to(payload.player.id).emit("unjoinable_game")
+              return of(null);
+            }
+
+          // if the game has started and that you're part of it (ie. reconnection)
+          if(game.started && !!game.players.find((player) => player.id === payload.player.id)){
+            game.players.forEach((player) => {
+              // TODO create a function to filter cards from other players
+              this.server.sockets
+                .to(player.id)
+                .emit(
+                  "game_updated",
+                  this.gameService.formatGame(game, player.id)
+                );
+
+            });
+            return of(null);
+          }
+
+          return of(null);
+      }),
     );
-
-    return;
   }
 
   @SubscribeMessage("start")
@@ -82,11 +98,12 @@ export class GameGateway
   ): Observable<Game> {
     return this.gameService.setup(payload.gameId).pipe(
       mergeMap((game) => {
-        console.log(game);
+        console.log('startturn');
         return this.gameService.startTurn(game)}),
       tap((game: Game) => {
-
+        console.log(game)
         game.players.forEach((player) => {
+          console.log(this.server.sockets, player.id, this.gameService.formatGame(game, player.id))
           // TODO create a function to filter cards from other players
           this.server.sockets
             .to(player.id)
@@ -100,29 +117,38 @@ export class GameGateway
     this.logger.log("Init");
   }
 
-  // TODO: if game has started, we shouldn't do anything
   handleDisconnect(client: Socket) {
-    console.log("disconnected");
+    // TODO: instead of checking the client.data, we should get all none finished game, check the players and if they are part of them, leave them
+    console.log("disconnected", client.data);
     if (client.data.gameId && client.data.playerId) {
-      this.gameService
-        .leaveGame(client.data.gameId, client.data.playerId)
-        .pipe(
-          tap((game) => {
-            game.players.forEach((player) => {
-              console.log("handle disconnction");
-              // TODO create a function to filter cards from other players
-              this.server.sockets
-                .to(player.id)
-                .emit(
-                  "game_updated",
-                  this.gameService.formatGame(game, player.id)
-                );
-            });
-          })
-        )
+      this.gameService.findOne(client.data.gameId).pipe(
+        mergeMap((game) =>
+        {
+          console.log(game.started)
+          if(!game.started){
+            return this.gameService
+            .leaveGame(client.data.gameId, client.data.playerId)
+            .pipe(
+              tap((game) => {
+                game.players.forEach((player) => {
+                  console.log("handle disconnction");
+                  // TODO create a function to filter cards from other players
+                  this.server.sockets
+                    .to(player.id)
+                    .emit(
+                      "game_updated",
+                      this.gameService.formatGame(game, player.id)
+                    );
+                });
+              })
+            )
+          }
+
+          return of(null);
+        }))
         .subscribe();
     }
-
+console.log('fin de disconnect')
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 

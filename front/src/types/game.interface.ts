@@ -1,6 +1,7 @@
 export interface Card {
   type: "defusingWire" | "bomb" | "secureWire";
   revealed: boolean;
+  id: string;
 }
 
 export interface Turn {

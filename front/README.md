@@ -17,3 +17,6 @@ L'utilisateur courrant se fait souvent déconnecté et n'arrive pas a se reco ap
 
 Côté api ne pas retourner le type de la card mais une card lambda pour n'avoir côté front que le dos de la card
 Comme ça a été fait pour le role du joueur
+
+Centrer la modal de role avec la couleur bleu/rouge
+Toujours mettre le current user en bas au milieu/ à gauche

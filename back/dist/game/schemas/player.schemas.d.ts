@@ -4,6 +4,7 @@ export declare const PLAYER_NAME_SCHEMA = "Player";
 export declare class Card {
     type: "defusingWire" | "bomb" | "secureWire";
     revealed: boolean;
+    id: string;
 }
 export declare class Turn {
     cards: Card[];

@@ -8,7 +8,6 @@ import {
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 
 import { Game, Player } from "../types";
-import { httpFetch } from "../utils/fetch";
 import { useWebSocket } from "./WebSocketProvider";
 
 interface GameContextType {
@@ -28,10 +27,20 @@ export const GameContext = createContext<GameContextType>({
 export const GameProvider: FunctionComponent<{userId: string}> = ({userId}) => {
   const navigate = useNavigate();
   const { gameId } = useParams();
-  const { webSocket } = useWebSocket();
+  const { webSocket, isConnected, joinGame, openWs } = useWebSocket();
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [game, setGame] = useState<Game | null>(null);
+  const nickname = localStorage.getItem("nickname")
+
+  useEffect(() => {
+      openWs();
+  }, [openWs])
+
+  useEffect(() => {
+    if(isConnected && !!joinGame && !!gameId && !!userId && !!nickname) {
+      joinGame(gameId, userId, nickname);
+    }
+  }, [isConnected, gameId, userId, nickname, joinGame])
 
   useEffect(() => {
     if (webSocket) {
@@ -41,44 +50,20 @@ export const GameProvider: FunctionComponent<{userId: string}> = ({userId}) => {
       webSocket?.on("game_started", (game) => {
         setGame(game);
       });
+      webSocket?.on("unjoinable_game", (game) => {
+        navigate('/')
+      });
     }
-  }, [webSocket]);
-
-  useEffect(() => {
-    if (!gameId) {
-      navigate("/");
-      return;
-    }
-
-    if (!!gameId && !game && !isLoading ) {
-      setIsLoading(true);
-      httpFetch<Game>({
-        method: "GET",
-        url: `http://localhost:2000/games/${gameId}`,
-      })
-        .then((createdGame) => {
-          setGame(createdGame);
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setIsLoading(false);
-          navigate("/");
-        });
-    }
-  }, [gameId, game, isLoading, navigate]);
-
-
+  }, [webSocket, navigate]);
 
   const player = game?.players.find((player) => player.id === userId);
   // const currentTurn = player ? player.turns[game.];
-
-  console.log(userId, game, player)
 
   return (
     <GameContext.Provider
       value={{
         game,
-        isLoading,
+        isLoading: !isConnected,
         userId,
         player: player || null,
       }}

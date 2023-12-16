@@ -2,9 +2,6 @@ import {
   FunctionComponent,
   useEffect,
   useCallback,
-  useState,
-  useMemo,
-  ChangeEvent,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -18,45 +15,19 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 
-
 import { useWebSocket } from "../context/WebSocketProvider";
 import { useGame } from "../context/GameProvider";
 
 export const LobbyPage: FunctionComponent = () => {
   const { game, isLoading, userId } = useGame();
 
-  const [nickname, setNickname] = useState<string>(
-    localStorage.getItem("nickname") || ""
-  );
-  const [isReady, setReady] = useState<boolean>(false);
-  const [isPageLoading, setPageLoading] = useState<boolean>(true);
-
-  const { webSocket, joinGame } = useWebSocket();
+  const { webSocket } = useWebSocket();
   const { gameId } = useParams();
   const navigate = useNavigate();
 
+  const gameUrl = `http://localhost:3000/lobby/${gameId}`;
 
-  const gameUrl = useMemo(
-    () => `http://localhost:3000/lobby/${gameId}`,
-    [gameId]
-  );
   const { hasCopied, onCopy } = useClipboard(gameUrl);
-
-  const joinLobby = useCallback(() => {
-    setReady(true);
-    if(joinGame && gameId){
-      joinGame(gameId, userId, nickname);
-    } else {
-     // TODO wait for the websocket connection before ?
-    }
-
-
-  }, [gameId, userId, nickname, joinGame, setReady]);
-
-  const onNicknameChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setNickname(event.target.value);
-    localStorage.setItem('nickname', event.target.value);
-  }, [setNickname]);
 
   useEffect(() => {
     if (webSocket) {
@@ -66,10 +37,6 @@ export const LobbyPage: FunctionComponent = () => {
     }
   }, [webSocket, navigate]);
 
-  useEffect(() => {
-    setPageLoading(!isLoading ? isLoading : true);
-  }, [isLoading]);
-
   const startGame = useCallback(() => {
     if (webSocket) {
       webSocket?.emit("start", { gameId });
@@ -78,21 +45,8 @@ export const LobbyPage: FunctionComponent = () => {
 
   return (
     <>
-      {isPageLoading && <Spinner size="xl" />}
-      {!isReady && game && game.players.length < 8 && (
-        <>
-          <Input
-            value={nickname}
-            onChange={onNicknameChange}
-            placeholder="Select a Nickname"
-          />
-          <Button isDisabled={!nickname} onClick={joinLobby}>
-            Join the game
-          </Button>
-        </>
-      )}
-      {!isReady && game && game.players.length >= 7 && <>Game full</>}
-      {isReady && (
+      {isLoading && <Spinner size="xl" />}
+      {game && game.players.length >= 7 && <>Game full</>}
         <>
           <Flex mb={2}>
             Invite your friends
@@ -136,7 +90,6 @@ export const LobbyPage: FunctionComponent = () => {
             </Flex>
           )}
         </>
-      )}
     </>
   );
 };

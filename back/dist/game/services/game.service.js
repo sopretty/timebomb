@@ -110,20 +110,26 @@ let GameService = exports.GameService = class GameService {
             const cardPull = [];
             cardPull.push(...Array.from(Array(bombCardNumber).keys()).map(() => ({
                 type: "bomb",
+                revealed: false,
                 id: (0, uuid_1.v4)(),
             })));
             cardPull.push(...Array.from(Array(secureWireCardsNumber).keys()).map(() => ({
                 type: "secureWire",
+                revealed: false,
                 id: (0, uuid_1.v4)(),
             })));
             cardPull.push(...Array.from(Array(defusingWireCardsNumber).keys()).map(() => ({
                 type: "defusingWire",
+                revealed: false,
                 id: (0, uuid_1.v4)(),
             })));
             const shuffledCards = shuffle(cardPull);
-            const players = game.players.map((player) => (Object.assign(Object.assign({}, player), { turns: player.turns.push({ cards: [], ready: false }) })));
+            game.players.forEach((player) => {
+                player.turns.push({ cards: [], ready: false });
+            });
             while (cardsNumberToDeal > 0) {
                 const [cardPulled] = shuffledCards.splice(Math.floor(Math.random() * shuffledCards.length), 1);
+                console.log(cardPull);
                 game.players[(randomPlayerIndex + cardsNumberToDealTotal - cardsNumberToDeal) %
                     game.players.length].turns[turn - 1].cards.push(cardPulled);
                 cardsNumberToDeal--;
@@ -151,7 +157,7 @@ let GameService = exports.GameService = class GameService {
     }
     formatGame(game, playerId) {
         return Object.assign(Object.assign({}, game), { players: game.players.map((playerFilter) => (Object.assign(Object.assign({}, playerFilter), (playerFilter.id !== playerId
-                ? { turns: undefined, role: undefined }
+                ? { turns: playerFilter.turns.map((turn) => (Object.assign(Object.assign({}, turn), { cards: turn.cards.map((card) => (Object.assign(Object.assign({}, card), { type: undefined }))) }))), role: undefined }
                 : {})))) });
     }
 };

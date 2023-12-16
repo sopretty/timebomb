@@ -21,31 +21,49 @@ let GameGateway = exports.GameGateway = class GameGateway {
         this.logger = new common_1.Logger("GameGateway");
     }
     joinGameMessage(client, payload) {
-        console.log("join", payload.player.id);
         client.join(payload.player.id);
-        return this.gameService.findOne(payload.gameId).pipe((0, rxjs_1.mergeMap)((game) => (0, rxjs_1.iif)(() => game.players.length < 8 &&
-            !game.players.find((player) => player.id === payload.player.id), this.gameService.joinGame(payload.gameId, payload.player).pipe((0, rxjs_1.tap)((game) => {
-            client.data = {
-                playerId: payload.player.id,
-                gameId: payload.gameId,
-            };
-            game.players.forEach((player) => {
-                console.log("when somebody else join", player.id);
-                this.server.sockets
-                    .to(player.id)
-                    .emit("game_updated", this.gameService.formatGame(game, player.id));
-            });
-        })), (0, rxjs_1.of)(null).pipe((0, rxjs_1.tap)(() => {
-            this.server.sockets.to(payload.player.id).emit("unjoinable_game");
-        })))));
-        return;
+        console.log('join', payload);
+        return this.gameService.findOne(payload.gameId).pipe((0, rxjs_1.mergeMap)((game) => {
+            if (game.players.length < 8 &&
+                !game.started &&
+                !game.players.find((player) => player.id === payload.player.id)) {
+                return this.gameService.joinGame(payload.gameId, payload.player).pipe((0, rxjs_1.tap)((game) => {
+                    client.data = {
+                        playerId: payload.player.id,
+                        gameId: payload.gameId,
+                    };
+                    game.players.forEach((player) => {
+                        console.log("when somebody else join", player.id);
+                        this.server.sockets
+                            .to(player.id)
+                            .emit("game_updated", this.gameService.formatGame(game, player.id));
+                    });
+                }));
+            }
+            if (game.players.length > 7 &&
+                !game.started) {
+                this.server.sockets.to(payload.player.id).emit("unjoinable_game");
+                return (0, rxjs_1.of)(null);
+            }
+            if (game.started && !!game.players.find((player) => player.id === payload.player.id)) {
+                game.players.forEach((player) => {
+                    this.server.sockets
+                        .to(player.id)
+                        .emit("game_updated", this.gameService.formatGame(game, player.id));
+                });
+                return (0, rxjs_1.of)(null);
+            }
+            return (0, rxjs_1.of)(null);
+        }));
     }
     startGameMessage(_client, payload) {
         return this.gameService.setup(payload.gameId).pipe((0, rxjs_1.mergeMap)((game) => {
-            console.log(game);
+            console.log('startturn');
             return this.gameService.startTurn(game);
         }), (0, rxjs_1.tap)((game) => {
+            console.log(game);
             game.players.forEach((player) => {
+                console.log(this.server.sockets, player.id, this.gameService.formatGame(game, player.id));
                 this.server.sockets
                     .to(player.id)
                     .emit("game_started", this.gameService.formatGame(game, player.id));
@@ -56,20 +74,27 @@ let GameGateway = exports.GameGateway = class GameGateway {
         this.logger.log("Init");
     }
     handleDisconnect(client) {
-        console.log("disconnected");
+        console.log("disconnected", client.data);
         if (client.data.gameId && client.data.playerId) {
-            this.gameService
-                .leaveGame(client.data.gameId, client.data.playerId)
-                .pipe((0, rxjs_1.tap)((game) => {
-                game.players.forEach((player) => {
-                    console.log("handle disconnction");
-                    this.server.sockets
-                        .to(player.id)
-                        .emit("game_updated", this.gameService.formatGame(game, player.id));
-                });
+            this.gameService.findOne(client.data.gameId).pipe((0, rxjs_1.mergeMap)((game) => {
+                console.log(game.started);
+                if (!game.started) {
+                    return this.gameService
+                        .leaveGame(client.data.gameId, client.data.playerId)
+                        .pipe((0, rxjs_1.tap)((game) => {
+                        game.players.forEach((player) => {
+                            console.log("handle disconnction");
+                            this.server.sockets
+                                .to(player.id)
+                                .emit("game_updated", this.gameService.formatGame(game, player.id));
+                        });
+                    }));
+                }
+                return (0, rxjs_1.of)(null);
             }))
                 .subscribe();
         }
+        console.log('fin de disconnect');
         this.logger.log(`Client disconnected: ${client.id}`);
     }
     handleConnection(client, ...args) {
