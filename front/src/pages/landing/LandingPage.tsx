@@ -2,13 +2,13 @@ import { ChangeEvent, FunctionComponent, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Flex, Button,  Input } from "@chakra-ui/react";
 
-import { httpFetch } from "../utils/fetch";
+import { httpFetch } from "../../utils/fetch";
 
 export const LandingPage: FunctionComponent<{userId: string}> = ({userId}) => {
   const navigate = useNavigate();
 
   const [nickname, setNickname] = useState<string>(
-    localStorage.getItem("nickname") || ""
+    localStorage.getItem("nickname") ?? ""
   );
 
   const createGame = useCallback(() => {
@@ -31,13 +31,11 @@ export const LandingPage: FunctionComponent<{userId: string}> = ({userId}) => {
   return (
     <Flex h="100%" justify="center">
       <Flex direction="column" justify="center">
-        <>
           <Input
             value={nickname}
             onChange={onNicknameChange}
             placeholder="Select a Nickname"
           />
-        </>
         <Button isDisabled={!nickname} onClick={createGame}>Create Game</Button>
       </Flex>
     </Flex>

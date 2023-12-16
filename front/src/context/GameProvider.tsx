@@ -3,6 +3,7 @@ import {
   FunctionComponent,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
@@ -59,14 +60,14 @@ export const GameProvider: FunctionComponent<{userId: string}> = ({userId}) => {
   const player = game?.players.find((player) => player.id === userId);
   // const currentTurn = player ? player.turns[game.];
 
+ const providersValues = useMemo(() => ({ game,
+  isLoading: !isConnected,
+  userId,
+  player: player ?? null,}), [isConnected, player, userId, game])
+
   return (
     <GameContext.Provider
-      value={{
-        game,
-        isLoading: !isConnected,
-        userId,
-        player: player || null,
-      }}
+      value={providersValues}
     >
       <Outlet />
     </GameContext.Provider>

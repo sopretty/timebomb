@@ -15,8 +15,8 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 
-import { useWebSocket } from "../context/WebSocketProvider";
-import { useGame } from "../context/GameProvider";
+import { useWebSocket } from "../../context/WebSocketProvider";
+import { useGame } from "../../context/GameProvider";
 
 export const LobbyPage: FunctionComponent = () => {
   const { game, isLoading, userId } = useGame();
@@ -25,7 +25,7 @@ export const LobbyPage: FunctionComponent = () => {
   const { gameId } = useParams();
   const navigate = useNavigate();
 
-  const gameUrl = `http://localhost:3000/lobby/${gameId}`;
+  const gameUrl = `http://localhost:3000/invite/${gameId}`;
 
   const { hasCopied, onCopy } = useClipboard(gameUrl);
 

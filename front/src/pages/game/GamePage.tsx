@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { Box, Image, Spinner, Text } from "@chakra-ui/react";
 
 import { currentPlayerTheme, gamePagetheme } from "./theme";
-import { useGame } from "../context/GameProvider";
+import { useGame } from "../../context/GameProvider";
 import { StartingGameModal } from "./components/StartingGameModal";
 import { Card } from "./components/Card";
 

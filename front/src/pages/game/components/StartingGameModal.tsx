@@ -9,7 +9,7 @@ import {
     ModalCloseButton,
     Button,
   } from "@chakra-ui/react";
-import { useGame } from "../../context/GameProvider";
+import { useGame } from "../../../context/GameProvider";
 
 
 export const StartingGameModal: FunctionComponent= () => {
